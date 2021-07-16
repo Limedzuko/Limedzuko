@@ -11,6 +11,10 @@ from discord import user
 import json
 from discord import guild
 from discord import client
+import praw
+from praw.reddit import Subreddit
+import aiohttp
+
 
 client = commands.Bot(command_prefix='ayo ', help_command=None)
 
@@ -33,6 +37,7 @@ async def clear(ctx, amount: int):
 async def kick(self, ctx, member:discord.member, * , reason=None):
   await member.kick(reason = reason)
   await ctx.channel.send(f"{member}'s been kicked from the server for {reason}")
+
 
 
 @client.command()
@@ -171,22 +176,17 @@ poop = ['nice cash broooo :moneybag:',
         ':wave:',
         'calculating x/y^(2+a) it seems like your bank account is very likely to explode']
 
-@client.command(aliases=['bal'])
-async def balance(ctx):
-    await open_account(ctx.author)
-    user = ctx.author
 
-    users = await get_bank_data()
 
-    wallet_amt = users[str(user.id)]["wallet"]
-    bank_amt = users[str(user.id)]["bank"]
 
-    em = discord.Embed(description = f"{ctx.author.name}'s Balance")
-    em.add_field(name=f'`wallet`: :coin: {wallet_amt}',value=(f'_ _') ,inline = False)
-    em.add_field(name=f'`bank`: :coin: {bank_amt}',value=(f'_ _ ') , inline= False)
 
-   
-    await ctx.send(embed= em)
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.errors.CommandOnCooldown):  
+       return await ctx.send("u can't {} until ur **`{:.2f}`** second cooldown ends. Ok bro?".format(ctx.command.name, error.retry_after))
+
+
 
     
 
@@ -194,6 +194,7 @@ async def balance(ctx):
  
 
 @client.command()
+@commands.cooldown(1, 10, commands.BucketType.user)
 async def beg(ctx):
     await open_account(ctx.author)
     user = ctx.author
@@ -220,6 +221,7 @@ async def beg(ctx):
 
 
 @client.command()
+@commands.cooldown(1, 10, commands.BucketType.user)
 async def fish(ctx):
     await open_account(ctx.author)
     user = ctx.author
@@ -262,6 +264,7 @@ async def fish(ctx):
         json.dump(users,f)
 
 @client.command()
+@commands.cooldown(1, 10, commands.BucketType.user)
 async def hunt(ctx):
     await open_account(ctx.author)
     user = ctx.author
@@ -280,8 +283,19 @@ async def hunt(ctx):
       return
 
     if huntcount > 1:
-      await ctx.send(f"{ctx.author.mention} hunted down `{huntcount}` {random.choice(huntmain)} which you sold for :coin: {earnings}")  
+      message =  await ctx.send('hunting')
+      await asyncio.sleep(0.1)
+      await message.edit(content="hunting.")
+      await asyncio.sleep(0.1)
+      await message.edit(content="hunting..")
+      await asyncio.sleep(0.1)
+      await message.edit(content="hunting...")
+      await asyncio.sleep(0.1)
+      await message.edit(content="hunting...")
+      await asyncio.sleep(0.1)
+      await message.edit(content= (f"{ctx.author.mention} hunted down `{huntcount}` {random.choice(huntmain)} which you sold for :coin: {earnings}"))
       return
+  
 
     users[str(user.id)]["wallet"] += earnings
 
@@ -362,6 +376,7 @@ async def give(ctx,member : discord.Member,amount = None):
 
 
 @client.command(aliases=['rb'])
+@commands.cooldown(1,300, commands.BucketType.user)
 async def rob(ctx,member : discord.Member):
     await open_account(ctx.author)
     await open_account(member)
@@ -377,6 +392,136 @@ async def rob(ctx,member : discord.Member):
     await update_bank(ctx.author,earning)
     await update_bank(member,-1*earning)
     await ctx.send(f'{ctx.author.mention} robbed {member.name} and got :coin: {earning} :money_with_wings: ')
+
+
+@client.command
+async def roast(ctx):
+  roasts	= ['You’re the reason God created the middle finger.',
+           ' Your secrets are always safe with me. I never even listen when you tell me them.',
+           'You bring everyone so much joy when you leave the room.',
+           ' I may love to shop but I will never buy your bull.',
+           'I’d give you a nasty look but you’ve already got one.',
+           ' Someday you’ll go far. I hope you stay there.',
+            'Were you born this stupid or did you take lessons?',
+            'The people who tolerate you on a daily basis are the real heroes.',
+            'You should really consider coming with a warning label smh',
+            'You look like something that came out of a slow cooker.',
+            'I don’t know what your problem is, but I’m guessing it’s hard to pronounce.',
+            'If I wanted to hear from a moron, I’d fart and come to you.',
+            'It’s kind of hilarious watching you try to fit your entire vocabulary into one sentence.',
+            'You look like something that came out of a slow cooker',
+            'I will ignore you so hard you will start doubting your existence.',
+            'Feed your own ego. I’m busy.',
+            ' I’ll never forget the first time we met. But I’ll keep trying.',
+            'You’re a grey sprinkle on a rainbow cupcake.',
+            ' I thought of you today. It reminded me to take out the trash.',
+            ' You are so full of poop, the toilet’s jealous.',
+            'I love what you’ve done with your hair. How do you get it to come out of the nostrils like that?',
+            'Stupidity isn’t a crime, so you’re free to go.',
+            'I’ve been called worse by better.',
+            'Don’t you get tired of putting makeup on your two faces every morning?',
+            'Too bad you can’t Photoshop your ugly personality.',
+            'Do your parents even realize they’re living proof that two wrongs don’t make a right?',
+            'Jesus might love you, but everyone else definitely thinks you’re an idiot.',
+            'Please just tell me you don’t plan to home-school your kids.',
+            'You see that door? I want you on the other side of it.',
+            'You’re like the end pieces of a loaf of bread. Everyone touches you, but nobody wants you.',
+            'If you’re going to act like a turd, go lay on the yard.',
+            'You are more disappointing than an unsalted pretzel.',
+            'Your face makes onions cry.',
+            'Don’t worry about me. Worry about your eyebrows.',
+            'Where’d you get your clothes, girl, American Apparently Not?',
+            'If laughter is the best medicine, your face must be curing the world.',
+            'You’re not stupid! You just have bad luck when you’re thinking.',
+            'Isn’t there a bullet somewhere you could be jumping in front of?',
+            'I’d slap you but I don’t want to make your face look any better.',
+            ' Have a nice day, ||somewhere else||.',
+            'Everyone’s entitled to act stupid once in a while, but you really abuse the privilege.',
+            'If ignorance is bliss, you must be the happiest person on the planet.',
+            "I got too weak to roast you this time bud, but imma get you next time you hearin' me?",
+            "Your family tree must be a cactus ‘cause you’re all a bunch of pricks.",
+            'If I threw a stick, you’d leave, right?',
+            'Somewhere out there, there’s a tree working very hard to produce oxygen so that you can breathe. I think you should go and apologize to it.',
+            'You look like a ‘before’ picture.',
+            'Light travels faster than sound which is why you seemed bright until you spoke.',
+            'Hold still. I’m trying to imagine you with personality.',
+            'You are the human version of period cramps.',
+            'Don’t get bitter, just get better" - your very mom',
+            '50. What doesn’t kill you, disappoints me.',
+            'Aww, it’s so cute when you **try** to talk about things you don’t understand.',
+            'Hey, your village called – they want their idiot back.',
+            'Calling you an idiot would be an insult to all stupid people.',
+            'I am returning your nose. I found it in my business.',
+            'Good story, but in what chapter do you shut up?',
+            'There are some remarkably dumb people in this world. Thanks for helping me understand that.',
+            'You’re about as useful as an ashtray on a motorcycle.',
+            'You’ll never be the man your mom is',
+            'You need a kiss on the neck from a crocodile.',
+            'May both sides of your pillow be uncomfortably warm.',
+            'Your kid is so annoying, he makes his Happy Meal cry.',
+            'Oh, I’m sorry. Did the middle of my sentence interrupt the beginning of yours?',
+            'Oops, my bad. I could’ve sworn I was dealing with an adult.',
+            'Did I invite you to the barbecue? Then why are you all up in my grill?'
+            'I’m an acquired taste. If you don’t like me, acquire some taste.',
+            'Somewhere out there is a tree tirelessly producing oxygen for you. You owe it an apology.',
+            'Yeah? Well, you smell like hot dog water.',
+            'Beauty is only skin deep, but ugly goes clean to the bone.',
+            'Oh, you don’t like being treated the way you treat me? That must suck.',
+            'Pierre Trudeau, a Canadian politician, used this clap back after learning that Richard Nixon had insulted him. The political shade!',
+            'Well, the jerk store called. They’re running out of you.',
+            '“What, like it’s hard?” — Elle Woods, Legally Blonde',
+            'Sorry, not sorry bwo',
+            'I’m busy right now; can I ignore you another time?',
+            'If you have a problem with me, write the problem on a piece of paper, fold it, and shove it into your brain `lol`.',
+            'You have an entire life to be an idiot. Why not take today off?',
+            'No matter how much a snake sheds its skin, it’s still a snake.',
+            'Some people are like slinkies — not really good for much, but they bring a smile to your face when pushed down the stairs.',
+            'You’re the reason this country has to put directions on shampoo.',
+            'Of course I’m talking like an idiot… how else could you understand me?',
+            'Are you almost done with all of this drama? Because I need an intermission.'
+            'I’d give you a nasty look, but you’ve already got one.',
+            'I’d agree with you, but then we’d both be wrong.',
+            'Since you know it all, you should know when to shut up.',
+            ' Life is full of disappointments, and I just added you to the list.',
+            'I treasure the time I don’t spend with you.',
+            'I was going to make a joke about your life, but I see life beat me to the punch.',
+            'The last time I saw something like you… I flushed.',
+            'The only work-life balance I want is being away from you.',
+            "When you start talking, I'd rather go `deaf`."]
+  await ctx.send(f"{random.choice(huntmain)}")
+
+@client.command(aliases=['BALANCE', 'BAL', 'Balance' , 'balance'])
+async def bal(ctx, member:discord.Member= None):
+        if member != None:
+            await open_account(member)
+            users = await get_bank_data()
+
+            wallet_amt = users[str(member.id)]["wallet"]
+            bank_amt = users[str(member.id)]["bank"]
+
+            embed = discord.Embed(
+                title = f"`{member.name}`'s balance",
+             )
+          
+            embed.add_field(name=f'`wallet`: :coin: {wallet_amt}', value=(f"_ _"), inline=False)
+            embed.add_field(name=f'`bank`: :coin: {bank_amt}', value=(f"_ _"), inline=False)
+            await ctx.message.reply(embed=embed)
+        else:
+            user = ctx.author
+            await open_account(user)
+            users = await get_bank_data()
+
+            wallet_amt = users[str(user.id)]["wallet"]
+            bank_amt = users[str(user.id)]["bank"]
+
+            embed = discord.Embed(
+                title = f"`{ctx.author.name}`'s balance",
+              
+            )
+            embed.add_field(name=f'`wallet`: :coin: {wallet_amt}', value=(f"_ _") , inline=False)
+            embed.add_field(name=f'`bank`: :coin: {bank_amt}', value= (f"_ _"), inline=False)
+            await ctx.message.reply(embed=embed)  
+
 
 
 @client.command()
@@ -648,9 +793,107 @@ async def update_bank(user,change=0,mode = 'wallet'):
     bal = users[str(user.id)]['wallet'],users[str(user.id)]['bank']
     return bal
 
+@client.command(pass_context=True)
+async def meme(ctx):
+    embed = discord.Embed(title="", description="")
+
+    async with aiohttp.ClientSession() as cs:
+        async with cs.get('https://www.reddit.com/r/dankmemes/new.json?') as r:
+            res = await r.json()
+            embed.set_image(url=res['data']['children'] [random.randint(0,25)]['data']['url'])
+            await ctx.send(embed=embed)
+
+@client.command()
+async def cookie(ctx):
+    cookiebed=discord.Embed(
+        title = "You want a cookie boi?" ,
+        description = f"Alright, here's a :cookie:" ,
+        colour = discord.Colour.orange())
+    await ctx.send(embed=cookiebed)
+
+@client.command(aliases=['Magic8ball','8ball' , '8bal'])
+async def _8ball(ctx, *, question):
+  responses =  ["It is certain.",
+                  "It is decidedly so.",
+                  "Without a doubt.",
+                  "Yes - definitely.",
+                  "You may rely on it.",
+                  "As I see it, yes.",
+                  "Most likely.",
+                  "Outlook good.",
+                  "Yes.",
+                  "Signs point to yes.",
+                  "Reply hazy, try again.",
+                  "Ask again later.",
+                  "Better not tell you now.",
+                  "Cannot predict now.",
+                  "Concentrate and ask again.",
+                  "Don't count on it.",
+                  "My reply is no.",
+                  "My sources say no.",
+                  "Outlook not so good.",
+                  "Very doubtful."]
+  await ctx.send(f'ur question: {question}\n my answer: {random.choice(responses)}')
 
 
 
+#help cmd
 
-keepAlive() 
-client.run(os.environ.get("token"), bot=True, reconnect=True)
+@client.group(invoke_without_command=True)
+async def help(ctx):
+  h = discord.Embed(title= "Command List")
+  h.add_field(name=':yen: Currency', value = '`ayo help currency`')
+  h.add_field(name=':gear: Moderation', value = '`ayo help moderation`')
+  h.add_field(name=':golf: Games', value = '`ayo help games`')
+  h.add_field(name=':golf: Fun', value = '`ayo help fun`')
+  await ctx.send(embed=h) 
+
+
+@help.command()
+async def moderation(ctx):
+  u = discord.Embed(title = ':tools: Moderation Commands' , description = ':hammer: Utility Commands')
+  u.add_field(name=':neutral_face: Mute', value = '`ayo mute`')
+  u.add_field(name=':link: Kick', value = '`ayo kick`')
+  u.add_field(name=':lock: ban', value = '`ayo ban`')
+  u.add_field(name=':closed_lock_with_key: tempban', value = '`ayo tempban`')
+  u.add_field(name=':wrench: cooldown', value = '`ayo cooldown set`')
+  u.set_footer(text='banhammer time bois')
+  await ctx.send(embed=u)
+
+@help.command()
+async def currency(ctx):
+  c = discord.Embed(title = ':money_with_wings: Currency ' , description = 'Earn moneh big boi')
+  c.add_field(name=':fingers_crossed: beg', value = '`ayo beg`')
+  c.add_field(name=':sewing_needle: hunt', value = '`ayo hunt`')
+  c.add_field(name=':fish: fish', value = '`ayo fish`')
+  c.add_field(name=':moneybag: rob', value = '`ayo rob`')
+  c.add_field(name='hack', value = '`ayo hack`')
+  c.add_field(name=':bank: balance', value = '`ayo bal`')
+  c.add_field(name=':shopping_bags: shop', value = '`ayo shop`')
+  
+  c.set_footer(text='more trash commands coming soon')
+  
+  await ctx.send(embed=c)
+
+@help.command()
+async def fun(ctx):
+  f = discord.Embed(title = ':smile: fun' , description = 'Plays some games that the bot features brotha')
+  f.add_field(name=':joy: meme', value = '`ayo meme`')
+  f.add_field(name=':grimacing: roast', value = '`ayo roast <person>`')
+  f.set_footer(text='more trash commands coming soon')
+  
+  await ctx.send(embed=f)
+
+
+@help.command()
+async def games(ctx):
+  g = discord.Embed(title = ':golf: Games' , description = 'gameeengg yas yas')
+  g.add_field(name=':8ball: 8ball', value = '`ayo 8ball`')
+  g.add_field(name=':grimacing: roast', value = '`ayo roast <person>`')
+  g.set_footer(text='more trash commands coming soon')
+  
+  await ctx.send(embed=g)
+
+
+
+client.run('TOKEN')
