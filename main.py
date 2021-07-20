@@ -19,13 +19,6 @@ import datetime
 
 client = commands.Bot(command_prefix='ayo ', help_command=None)
 
-#welcome
-@client.event
-async def on_member_join(member): 
-  if member.guild.name == "Gregz's Greenhouse":
-    hibed=discord.Embed(description=f'Hi {member.mention} :wave:!!!' , colour = discord.Colour.purple())
-    await client.get_channel(861632717820264511).send(embed=hibed)
-    
 @client.event
 async def on_ready():
     await client.change_presence(status=discord.Status.online,activity=discord.Game('ayo help | v0.0.2'))
