@@ -14,6 +14,7 @@ from discord import client
 import praw
 from praw.reddit import Subreddit
 import aiohttp
+import datetime
 
 
 client = commands.Bot(command_prefix='ayo ', help_command=None)
@@ -25,6 +26,9 @@ async def on_member_join(member):
     hibed=discord.Embed(description=f'Hi {member.mention} :wave:!!!' , colour = discord.Colour.purple())
     await client.get_channel(861632717820264511).send(embed=hibed)
     
+@client.event
+async def on_ready():
+    await client.change_presence(status=discord.Status.online,activity=discord.Game('ayo help | v0.0.2'))
 
 
 #purge/clear command
@@ -42,6 +46,7 @@ async def kick(self, ctx, member:discord.member, * , reason=None):
 
 @client.command()
 async def hi(ctx):
+  
   message = await ctx.send("hello")
   await asyncio.sleep(0.2)
   await message.edit(content="hi")
@@ -63,6 +68,7 @@ async def hi(ctx):
   await message.edit(content=":wave:")
   await asyncio.sleep(0.2)
   await message.edit(content='bye `lol`')
+  
 
 
 @client.command()
@@ -75,7 +81,7 @@ async def die(ctx):
   await asyncio.sleep(0.2)
   await message.edit(content=':fire:')
   await asyncio.sleep(0.2)
-  await message.edit(content='DO EVERYTHINGGG')
+  await message.edit(content='SHEEEESSSH')
   await asyncio.sleep(0.2)
   await message.edit(content='You manage to kill urself Good job! :clap:')
   await asyncio.sleep(0.2)
@@ -176,15 +182,17 @@ poop = ['nice cash broooo :moneybag:',
         ':wave:',
         'calculating x/y^(2+a) it seems like your bank account is very likely to explode']
 
-
-
-
-
-
 @client.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CommandOnCooldown):  
-       return await ctx.send("u can't {} until ur **`{:.2f}`** second cooldown ends. Ok bro?".format(ctx.command.name, error.retry_after))
+    if isinstance(error, commands.CommandOnCooldown):
+        msg = "Ayo listen up spammy boi, you're still on your wonderful {:.2f} second cooldown".format(error.retry_after)
+        await ctx.send(msg)
+
+
+
+
+
+
 
 
 
@@ -263,6 +271,8 @@ async def fish(ctx):
     with open("mainbank.json",'w') as f:
         json.dump(users,f)
 
+
+
 @client.command()
 @commands.cooldown(1, 10, commands.BucketType.user)
 async def hunt(ctx):
@@ -315,10 +325,10 @@ async def withdraw(ctx,amount = None):
     amount = int(amount)
 
     if amount > bal[1]:
-        await ctx.send("Impossible child")
+        await ctx.send("Impossible, child")
         return
     if amount < 0:
-        await ctx.send('Amount must be positive!')
+        await ctx.send('Maybe try giving a `positive` amount ya genius')
         return
 
     await update_bank(ctx.author,amount)
@@ -394,10 +404,9 @@ async def rob(ctx,member : discord.Member):
     await ctx.send(f'{ctx.author.mention} robbed {member.name} and got :coin: {earning} :money_with_wings: ')
 
 
-@client.command
-async def roast(ctx):
-  roasts	= ['You’re the reason God created the middle finger.',
-           ' Your secrets are always safe with me. I never even listen when you tell me them.',
+
+roasts =  ['You’re the reason God created the middle finger.',
+           'Your secrets are always safe with me. I never even listen when you tell me them.',
            'You bring everyone so much joy when you leave the room.',
            ' I may love to shop but I will never buy your bull.',
            'I’d give you a nasty look but you’ve already got one.',
@@ -478,7 +487,7 @@ async def roast(ctx):
             'Some people are like slinkies — not really good for much, but they bring a smile to your face when pushed down the stairs.',
             'You’re the reason this country has to put directions on shampoo.',
             'Of course I’m talking like an idiot… how else could you understand me?',
-            'Are you almost done with all of this drama? Because I need an intermission.'
+            'Are you almost done with all of this drama? Because I need an intermission.',
             'I’d give you a nasty look, but you’ve already got one.',
             'I’d agree with you, but then we’d both be wrong.',
             'Since you know it all, you should know when to shut up.',
@@ -488,7 +497,19 @@ async def roast(ctx):
             'The last time I saw something like you… I flushed.',
             'The only work-life balance I want is being away from you.',
             "When you start talking, I'd rather go `deaf`."]
-  await ctx.send(f"{random.choice(huntmain)}")
+
+@client.command()
+async def roast(ctx,member: discord.Member):
+  await ctx.send(f"{ctx.author.name} roasted {member.name} by going, ❝{random.choice(roasts)}❞")
+
+
+@roast.error
+async def roast_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):  
+       await ctx.send("Maybe try mentioning someone to roast next time, genius")
+
+
+
 
 @client.command(aliases=['BALANCE', 'BAL', 'Balance' , 'balance'])
 async def bal(ctx, member:discord.Member= None):
@@ -500,11 +521,9 @@ async def bal(ctx, member:discord.Member= None):
             bank_amt = users[str(member.id)]["bank"]
 
             embed = discord.Embed(
-                title = f"`{member.name}`'s balance",
+                
+                description =(f"**{member.name}'s balance**\n **Wallet**: :coin: {wallet_amt}\n  **Bank**: :coin: {bank_amt}")
              )
-          
-            embed.add_field(name=f'`wallet`: :coin: {wallet_amt}', value=(f"_ _"), inline=False)
-            embed.add_field(name=f'`bank`: :coin: {bank_amt}', value=(f"_ _"), inline=False)
             await ctx.message.reply(embed=embed)
         else:
             user = ctx.author
@@ -515,11 +534,9 @@ async def bal(ctx, member:discord.Member= None):
             bank_amt = users[str(user.id)]["bank"]
 
             embed = discord.Embed(
-                title = f"`{ctx.author.name}`'s balance",
-              
+                
+                description = (f"**{ctx.author.name}'s balance**\n**Wallet**: :coin: {wallet_amt}\n**Bank**: :coin: {bank_amt}")
             )
-            embed.add_field(name=f'`wallet`: :coin: {wallet_amt}', value=(f"_ _") , inline=False)
-            embed.add_field(name=f'`bank`: :coin: {bank_amt}', value= (f"_ _"), inline=False)
             await ctx.message.reply(embed=embed)  
 
 
@@ -798,10 +815,10 @@ async def meme(ctx):
     embed = discord.Embed(title="", description="")
 
     async with aiohttp.ClientSession() as cs:
-        async with cs.get('https://www.reddit.com/r/dankmemes/new.json?') as r:
+        async with cs.get('https://www.reddit.com/r/memes/new.json') as r:
             res = await r.json()
             embed.set_image(url=res['data']['children'] [random.randint(0,25)]['data']['url'])
-            await ctx.send(embed=embed)
+            await ctx.reply(embed=embed)
 
 @client.command()
 async def cookie(ctx):
@@ -830,7 +847,7 @@ async def _8ball(ctx, *, question):
                   "Concentrate and ask again.",
                   "Don't count on it.",
                   "My reply is no.",
-                  "My sources say no.",
+                  "My very terrible sources say no.",
                   "Outlook not so good.",
                   "Very doubtful."]
   await ctx.send(f'ur question: {question}\n my answer: {random.choice(responses)}')
@@ -843,21 +860,42 @@ async def _8ball(ctx, *, question):
 async def help(ctx):
   h = discord.Embed(title= "Command List")
   h.add_field(name=':yen: Currency', value = '`ayo help currency`')
-  h.add_field(name=':gear: Moderation', value = '`ayo help moderation`')
+  h.add_field(name=':shield: Moderation', value = '`ayo help moderation`')
   h.add_field(name=':golf: Games', value = '`ayo help games`')
-  h.add_field(name=':golf: Fun', value = '`ayo help fun`')
+  h.add_field(name=':taco: Fun', value = '`ayo help fun`')
+  h.add_field(name=':gear: Utility', value = '`coming soon`')
+  h.add_field(name=':information_source: Info', value = '`ayo help info`')
   await ctx.send(embed=h) 
 
+@help.command(aliases=['information', 'inf', 'Information', 'Info'])
+async def info(ctx):
+  u = discord.Embed(title = ':anchor: Information' , description = ':satellite: Info on new updates, patches, events and more')
+  u.add_field(name=':bulb: Updates', value = '`ayo updates`')
+  u.add_field(name=':bricks: Contributers', value = '`ayo contributers`')
+  u.set_footer(text='that info you asked for, justin')
+  await ctx.send(embed=u)
 
-@help.command()
+
+
+@help.command(alaises = ['mod','admin', 'Mod', 'Admin', 'Moderation'])
 async def moderation(ctx):
+  umod = ['banhammer time bois',
+          'Discord Crime Alert',
+          "991, Emergency, there's suspicious meme activity in #general",
+          "Justin died smh",
+          "Beluga's mods almost made this",
+          "Hit 'em with the banhammer",
+          "Nice Moderation commands ikr!",
+          "The mod commands are lovely and marvelous, the English love it",
+          'Shout out to LimedFox']
+
   u = discord.Embed(title = ':tools: Moderation Commands' , description = ':hammer: Utility Commands')
   u.add_field(name=':neutral_face: Mute', value = '`ayo mute`')
   u.add_field(name=':link: Kick', value = '`ayo kick`')
   u.add_field(name=':lock: ban', value = '`ayo ban`')
   u.add_field(name=':closed_lock_with_key: tempban', value = '`ayo tempban`')
   u.add_field(name=':wrench: cooldown', value = '`ayo cooldown set`')
-  u.set_footer(text='banhammer time bois')
+  u.set_footer(text=f'{random.choice(umod)}')
   await ctx.send(embed=u)
 
 @help.command()
@@ -879,21 +917,179 @@ async def currency(ctx):
 async def fun(ctx):
   f = discord.Embed(title = ':smile: fun' , description = 'Plays some games that the bot features brotha')
   f.add_field(name=':joy: meme', value = '`ayo meme`')
-  f.add_field(name=':grimacing: roast', value = '`ayo roast <person>`')
+  f.add_field(name=':archery: truth', value = '`ayo truth`')
+  f.add_field(name=':broken_heart: dare', value = '`ayo dare`')
+  f.add_field(name=':thinking: emojify', value = '`ayo emojify <text>`')
+  f.add_field(name=':grimacing: roast', value = '`ayo roast <member>`')
   f.set_footer(text='more trash commands coming soon')
-  
+
   await ctx.send(embed=f)
 
 
 @help.command()
 async def games(ctx):
+  gchange =["Trust me you'll need help for madlibs",
+            "Brand NEW - Madlibs. Out right now!",
+            "More trash games coming soon"]
+
   g = discord.Embed(title = ':golf: Games' , description = 'gameeengg yas yas')
-  g.add_field(name=':8ball: 8ball', value = '`ayo 8ball`')
-  g.add_field(name=':grimacing: roast', value = '`ayo roast <person>`')
-  g.set_footer(text='more trash commands coming soon')
+  g.add_field(name=':8ball: 8ball', value = '`ayo 8ball <question>`')
+  g.add_field(name=':ledger: madlibs', value = '`ayo help madlibs`')
+  g.set_footer(text=f'{random.choice(gchange)}')
   
   await ctx.send(embed=g)
 
 
+@client.group(name='madlibs')
+async def madlibs(ctx):
+  m = discord.Embed(title=':file_folder: Madlibs', description = f':newspaper: Mad Libs is a phrasal template word game which consists of a player listing a list of words to substitute for blanks in a story before reading aloud and having a halarious moment!\n Madlibs Templates-')
+  m.add_field(name=':lizard: Zoo Template', value = 'ayo madlibs zoo')
+  m.set_footer(text='More templates coming soon')
+  await ctx.send(embed=m)
 
-client.run('TOKEN')
+
+
+@client.command(aliases=['Contributers', 'devs','ppl','people', 'Devs'])
+async def contributers(ctx):
+  cbs = discord.Embed(title=":reminder_ribbon: Cloudburst's Main Contributers", color = discord.Colour.teal())
+  cbs.add_field(name='**Our Developers:**', value = '*Main Dev(s): **Limed***\n*BackupHelpDev: **MathIsCool***',inline=False)
+  cbs.add_field(name='**Our Brainstormer(s):**', value ='***Limed***\n***BeastUnworn***',inline=False)
+  cbs.set_footer(text='Discord tags blurred for privacy reasons')
+  await ctx.send(embed=cbs)
+
+@client.command()
+async def birthday(ctx,member : discord.Member):
+  x = discord.Embed(title = f'HAPPY BIRTHDAY {member.name}!!!!' , color = discord.Colour.purple())
+  x.add_field(name = f'Best of wishes {member.name}', value = 'DEAREST FRIEND!!!!', inline =False)
+  x.set_footer(text= 'have a great day bye peace happy birthday bye bi')
+  
+  await ctx.send(embed=x)
+
+@client.command(aliases=['TRUTH','Truth' ])
+async def truth(ctx):
+    responses =  ["What's the lowest grade you've ever gotten?",
+                  "When was the last time you took a shower?",
+                  "Did you ever lie to your best friend?",
+                  ":thinking: What was the one thing you could never learn how to do no  matter how hard you tried?",
+                  "When was the last time you talked to your grandparents?",
+                  "Did you ever piss your pants in the middle of a gathering/school?",
+                  "Did you let someone else take the fall for something you did?",
+                  "How many times did you touch grass, you gamer sweat?",
+                  "Would you rather be a princess or a mermaid or a frog?",
+                  ":thinking: Would you rather brush your teeth thrice a year or use your phone once a day?",
+                  ":smirk: Did you ever blame anything on your sibling?",
+                  ":eyes: Did you ever drink ***toilet water*** (lol)?",
+                  "When was the last time you used the word 'anywho'?",
+                  "Did you ever pour the milk before the cereal?",
+                  "Concentrate and ask again.",
+                  "Do you always dance like no one's watching?",
+                  ":eyes: Would you rather get $1,000,000,000 or be able to fly?",
+                  ":thinking: Would you rather have a son or a daughter?",
+                  ":pensive: How many times have you quesioned humanity and existance?",
+                  "What is/was the best day of your life?" ,
+                  "What's your avourite colour?",
+                  "What's your biggest fantasy?",
+                  'When was the last time you lied?',
+                  'Do you have a hidden talent?',
+                  "What's the worst thing you've ever done?",
+                  "What's something you're glad your mum doesn't know about you?",
+                  "Would you rather never use social media again, or play video games again?",
+                  ]
+    await ctx.send(f'{random.choice(responses)}')
+
+
+@client.command(aliases=['Dare','DARE' ])
+async def dare(ctx):
+    responss =  ["Describe What The Sky Looks Like Without Using The Words Blue Or White.",
+                 "Talk In A Strange Accent For The Rest Of The Night.",
+                 "Stand on ur hands for 5 seconds",
+                 "Jump on your bed 50 times",
+                 ]
+    await ctx.send(f'{random.choice(responss)}')
+
+
+@madlibs.command(name = 'zoo')
+async def zoo(ctx):
+  await ctx.send(f'{ctx.author.mention} Type out a qualitative adjective [`1/13`]')
+  def check(m):
+    return m.author.id == ctx.author.id
+
+  
+   
+  message1 = await client.wait_for('message', check=check, timeout = 30)
+
+  
+  await ctx.send(f'{ctx.author.mention} Type out an a noun [`2/13`]')
+  message2 = await client.wait_for('message', check=check, timeout = 30)
+  
+  await ctx.send(f'{ctx.author.mention} Type out a past tense verb [`3/13`]')
+  
+  message3 = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type out an adverb [`4/13`]')
+
+  message4 = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type out another adjective [`5/13`]')
+
+  message5 = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type out another noun [`6/13`]|')
+
+  message6 = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type out another noun [`7/13`]')
+
+  anothernoun = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type a descriptive adjective [`8/13`]')
+
+  anotheradj = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f"{ctx.author.mention} Type a celebrity's name [`9/13`]")
+
+  anotheradj2 = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f"{ctx.author.mention} Type another adjective please? [`10/13`]")
+
+  verb3  = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type an adverb [`11/13`]')
+
+  adverb2 = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type a past tense verb [`12/13`]')
+
+  past2 = await client.wait_for('message', check=check, timeout = 30)
+  await ctx.send(f'{ctx.author.mention} Type an adjective `[13/13`]')
+
+  finaladj = await client.wait_for('message', check=check, timeout = 30)
+  z = discord.Embed(title= (f"{ctx.author.name}'s Day At The Zoo :palm_tree:"), description = f"Today I went to the zoo. I saw an {message1.content} {message2.content} jumping up and down its tree.\n They {message3.content} {message4.content} through the large tunnel that led to its {message5.content} {message6.content}.\n I got some peanuts and passed them through the cage to a gigantic gray {anothernoun.content} towering above my head.\n Feeding that animal made me hungry. I went to get a {anotheradj.content}scoop of {anotheradj2.content}'s ice cream.\n It filled my stomach. Afterwards I had to {verb3.content} {adverb2.content} to catch the bus.\n When I got home I {past2.content} my mom for a {finaladj.content} day at the zoo")
+  await ctx.send(embed=z)
+ 
+  
+
+
+@madlibs.error
+async def madlibs_error(ctx,error):
+  if isinstance(error, asyncio.TimeoutError):
+    await ctx.send('a')
+
+@client.command()
+async def emojify(ctx,*,text):
+  emojis = []
+  for s in text.lower():
+    if s.isdecimal():
+      num2emo = {'0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five','6':'six', '7':'seven','8':'eight', '9':'nine'}
+      emojis.append(f':{num2emo.get(s)}:')
+    elif s.isalpha():
+      emojis.append(f':regional_indicator_{s}:')
+    else:
+      emojis.append(s)
+  await ctx.send(''.join(emojis))
+
+@client.command(aliases=['update','New', 'Updates','updates'])
+async def new(ctx):
+  n = discord.Embed(title = 'LATEST UPDATES AND ADDITIONS TO CLOUDBURST!')
+  n.add_field(name='Update 0.0.2', value = f"**PRESENTING THE BOT'S BIGGEST ADDITION YET- MADLIBS** :partying_face: We've been working on this feature for a while, it's finally been added. NOTE - *More Madlib templates comming soon, still under massive development.* Thank you, :wave:")
+  await ctx.send(embed=n)
+
+
+
+@client.command
+async def vote(ctx):
+  await ctx.channel.send(f'{ctx.author.mention}, please vote ')
+
+
+client.run('TOKEN)
